@@ -35,6 +35,14 @@ python.exe -m pip install --upgrade pip
 ```bash
 pip install -r requirements.txt
 ```
+### 4. Create **.env** file
+
+In the project's main directory, based on file `.env.example`, create a file `.env` with the same structure.
+
+Get the API keys at:
+- LLAMA_CLOUD_API_KEY: [Llama Cloud](https://cloud.llamaindex.ai/landing)
+- GROQ_API_KEY: [Groq Cloud](https://console.groq.com/playground)
+
 ---
 ## Quick start
 Open Terminal and run the following command line:
