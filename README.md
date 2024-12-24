@@ -63,7 +63,7 @@ cd APIs
 ```
 - Run code
 ```bash
-uvicorn app:app
+python app.py
 ```
 View APIs document at: `http://127.0.0.1:8000/api/v1/docs`
 
