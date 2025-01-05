@@ -9,10 +9,10 @@ from llama_index.core.memory import ChatMemoryBuffer
 from llama_index.core.tools import QueryEngineTool, ToolMetadata
 from llama_index.core.agent.react import ReActAgent
 from llama_index.core.storage.chat_store import SimpleChatStore
-from llama_index.core.prompts import PromptTemplate
+from llama_index.core import PromptTemplate
 
 from config.settings import INDEX_STORAGE, CONVERSATION_FILE
-from config.prompts import CUSTOM_AGENT_SYSTEM_TEMPLATE, PROMPT_USER_INPUT
+from config.prompts import CUSTOM_AGENT_SYSTEM_TEMPLATE, PROMPT_USER_INPUT, TEXT_QA_TEMPLATE_STR, REFINE_TEMPLATE_STR
 from core.utils import initialize_settings
 
 
@@ -38,7 +38,7 @@ async def initialize_chatbot(username):
     chat_store = await load_chat_store()
 
     memory = ChatMemoryBuffer.from_defaults(
-        token_limit=3000,
+        token_limit=10,
         chat_store=chat_store,
         chat_store_key=username
     )
@@ -50,37 +50,38 @@ async def initialize_chatbot(username):
     index = await asyncio.to_thread(load_index_from_storage, storage_context)
 
     kdp_engine = index.as_chat_engine(
-        chat_mode="react",
-        similarity_top_k=3,
-        llm=llm
-    )
-
-    kdp_tool = QueryEngineTool(
-        query_engine=kdp_engine,
-        metadata=ToolMetadata(
-            name="kdp_english",
-            description="Cung cấp các thông tin liên quan đến việc học tiếng Anh. Sử dụng câu hỏi văn bản thuần túy chi tiết làm đầu vào cho công cụ."
-        )
-    )
-
-    agent = ReActAgent.from_tools(
-        tools=[kdp_tool],
         memory=memory,
-        system_prompt=PromptTemplate(CUSTOM_AGENT_SYSTEM_TEMPLATE)
+        llm=llm,
+        text_qa_template=PromptTemplate(TEXT_QA_TEMPLATE_STR),
+        refine_template=PromptTemplate(REFINE_TEMPLATE_STR),
     )
 
-    if len(chat_store.get_messages(key=username))==0:
+    # kdp_tool = QueryEngineTool(
+    #     query_engine=kdp_engine,
+    #     metadata=ToolMetadata(
+    #         name="kdp_english",
+    #         description="Cung cấp các thông tin liên quan đến việc học tiếng Anh. Sử dụng câu hỏi văn bản thuần túy chi tiết làm đầu vào cho công cụ."
+    #     )
+    # )
 
-        embedding_model, llm = await asyncio.to_thread(initialize_settings)
+    # agent = ReActAgent.from_tools(
+    #     tools=[kdp_tool],
+    #     memory=memory,
+    #     system_prompt=PromptTemplate(CUSTOM_AGENT_SYSTEM_TEMPLATE)
+    # )
 
-        Settings.llm = llm
-        Settings.embed_model = embedding_model
+    # if len(chat_store.get_messages(key=username))==0:
 
-        response = agent.chat(CUSTOM_AGENT_SYSTEM_TEMPLATE)
-        chat_store.persist(CONVERSATION_FILE)
+    #     embedding_model, llm = await asyncio.to_thread(initialize_settings)
+
+    #     Settings.llm = llm
+    #     Settings.embed_model = embedding_model
+
+    #     response = agent.chat(CUSTOM_AGENT_SYSTEM_TEMPLATE)
+    #     chat_store.persist(CONVERSATION_FILE)
 
 
-    return agent, chat_store
+    return kdp_engine, chat_store
 
 
 async def handle_user_message(agent, chat_store, user_message):

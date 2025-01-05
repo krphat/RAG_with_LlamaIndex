@@ -21,7 +21,7 @@ def initialize_settings():
         model_name="sentence-transformers/all-MiniLM-L6-v2", device=device_type
     )
 
-    llm = Groq(model="gemma2-9b-it", api_key=GROQ_API_KEY, temperature=0.2, device=device_type)
+    llm = Groq(model="gemma2-9b-it", api_key=GROQ_API_KEY, temperature=0.2, device_type=device_type)
     
     return embedding_model, llm
 
