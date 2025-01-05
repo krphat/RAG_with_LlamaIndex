@@ -11,22 +11,23 @@ from llama_index.core.storage.chat_store import SimpleChatStore
 from llama_index.llms.groq import Groq
 from llama_index.core import Settings
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+from llama_index.core import PromptTemplate
 
 import torch
 
 from src.global_settings import INDEX_STORAGE, CONVERSATION_FILE
-from src.prompts import CUSTORM_AGENT_SYSTEM_TEMPLATE
+from src.prompts import CUSTORM_AGENT_SYSTEM_TEMPLATE, TEXT_QA_TEMPLATE_STR, REFINE_TEMPLATE_STR
 from src.env import GROQ_API_KEY
 
 user_avatar = "data/images/user.jpg"
 bot_avatar = "data/images/kdp_bot.png"
 
-llm = Groq(model="llama3-8b-8192", api_key=GROQ_API_KEY)
-Settings.llm = llm
-
 device_type = "cuda" if torch.cuda.is_available() else "cpu"
 embedding_model = HuggingFaceEmbedding(model_name="sentence-transformers/all-MiniLM-L6-v2", device=device_type)
 Settings.embed_model = embedding_model
+
+llm = Groq(model="gemma2-9b-it", api_key=GROQ_API_KEY, temperature=0.2, device_type=device_type)
+Settings.llm = llm
 
 def load_chat_store():
     print("--> Call load_chat_store")
@@ -65,27 +66,33 @@ def initialize_chatbot(chat_store, container, username):
     index = load_index_from_storage(
         storage_context
     )
-    kdp_engine = index.as_query_engine(
-        similarity_top_k=3,
-    )
-    kdp_tool= QueryEngineTool(
-        query_engine=kdp_engine, 
-        metadata=ToolMetadata(
-            name="kdp_english",
-            description=(
-                f"Cung cấp các thông tin liên quan đến việc học tiếng Anh"
-                f". Sử dụng câu hỏi văn bản thuần túy chi tiết làm đầu vào cho công cụ"
-            ),
-        )
-    )   
-
-    agent = ReActAgent.from_tools(
-        tools=[kdp_tool], 
+    kdp_engine = index.as_chat_engine(
         memory=memory,
-        system_prompt=CUSTORM_AGENT_SYSTEM_TEMPLATE
+        llm=llm,
+        text_qa_template=PromptTemplate(TEXT_QA_TEMPLATE_STR),
+        refine_template=PromptTemplate(REFINE_TEMPLATE_STR),
     )
+
+    # kdp_tool= QueryEngineTool(
+    #     query_engine=kdp_engine, 
+    #     metadata=ToolMetadata(
+    #         name="kdp_english",
+    #         description=(
+    #             f"Cung cấp các thông tin liên quan đến việc học tiếng Anh"
+    #             f". Sử dụng câu hỏi văn bản thuần túy chi tiết làm đầu vào cho công cụ"
+    #         ),
+    #     )
+    # )   
+
+    # agent = ReActAgent.from_tools(
+    #     tools=[kdp_tool], 
+    #     memory=memory,
+    #     system_prompt=CUSTORM_AGENT_SYSTEM_TEMPLATE
+    # )
+
     display_messages(chat_store, container, key=username)
-    return agent
+
+    return kdp_engine
 
 
 def chat_interface(agent, chat_store, container, username):

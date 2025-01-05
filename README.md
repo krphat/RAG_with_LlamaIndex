@@ -1,9 +1,10 @@
 # 🤖Chatbot RAG with LlamaIndex 🦙
+A chatbot that supports learning English for Vietnamese people is built based on the Retrieval Augmented Generation (RAG) architecture and the LlamaIndex library.
 ---
 ## Settings
 ### 1. Clone this repository
 ```bash
-https://github.com/krphat/RAG_with_LlamaIndex.git
+git clone https://github.com/krphat/RAG_with_LlamaIndex.git
 ```
 ### 2. Create virtual environment
 Open Terminal and run the following command line:
@@ -44,7 +45,7 @@ Get the API keys at:
 - GROQ_API_KEY: [Groq Cloud](https://console.groq.com/playground)
 
 ---
-## Quick start (Currently not working!)
+## Quick start
 Open Terminal and run the following command line:
 - Go to project folder
 ```bash
@@ -65,7 +66,7 @@ cd APIs
 ```bash
 python app.py
 ```
-View APIs document at: `http://127.0.0.1:8000/api/v2/docs`
+View APIs document at: `http://127.0.0.1:8000/api/v1/docs`
 
 
 

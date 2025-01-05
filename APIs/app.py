@@ -4,7 +4,7 @@ import uvicorn
 from routes.upload_document import router as upload_router
 from routes.conversations import router as conversations_router
 
-version = "v2"
+version = "v1"
 # Danh sách các origin được phép
 origins = [
     "http://localhost:3001",  # Origin của frontend
@@ -42,5 +42,5 @@ if __name__ == "__main__":
 
 """
     Run server: python app.py
-    APIs document: http://127.0.0.1:8000/api/v2/docs
+    APIs document: http://127.0.0.1:8000/api/v1/docs
 """
