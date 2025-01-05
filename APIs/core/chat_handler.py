@@ -2,6 +2,8 @@ import os
 import json
 import asyncio
 
+import sys
+sys.path.append("...") # Adds higher directory to python modules path.
 
 from llama_index.core import Settings
 from llama_index.core import load_index_from_storage, StorageContext
@@ -11,22 +13,13 @@ from llama_index.core.agent.react import ReActAgent
 from llama_index.core.storage.chat_store import SimpleChatStore
 from llama_index.core import PromptTemplate
 
-from config.settings import INDEX_STORAGE, CONVERSATION_FILE
+from config.settings import INDEX_STORAGE, CONVERSATION_FILE, POSTGRES_CONFIG_FILE, CHAT_HISTORY_DATABASE
 from config.prompts import CUSTOM_AGENT_SYSTEM_TEMPLATE, PROMPT_USER_INPUT, TEXT_QA_TEMPLATE_STR, REFINE_TEMPLATE_STR
 from core.utils import initialize_settings
 
 
-async def load_chat_store():
-
-    if os.path.exists(CONVERSATION_FILE) and os.path.getsize(CONVERSATION_FILE) > 0:
-        try:
-            chat_store = SimpleChatStore.from_persist_path(CONVERSATION_FILE)
-        except json.JSONDecodeError:
-            chat_store = SimpleChatStore()
-    else:
-        chat_store = SimpleChatStore()
-    return chat_store
-
+from core.indexing import load_vector_index
+from database.postgres.chat_history_manager import ChatStoreInitializer
 
 async def initialize_chatbot(username):
 
@@ -35,7 +28,8 @@ async def initialize_chatbot(username):
     Settings.llm = llm
     Settings.embed_model = embedding_model
 
-    chat_store = await load_chat_store()
+    chat_store_initializer = ChatStoreInitializer(POSTGRES_CONFIG_FILE, CHAT_HISTORY_DATABASE)
+    chat_store = chat_store_initializer.initialize_chat_store()
 
     memory = ChatMemoryBuffer.from_defaults(
         token_limit=10,
@@ -43,18 +37,21 @@ async def initialize_chatbot(username):
         chat_store_key=username
     )
 
-    storage_context = StorageContext.from_defaults(
-        persist_dir=INDEX_STORAGE
-    )
+    index = await load_vector_index()
 
-    index = await asyncio.to_thread(load_index_from_storage, storage_context)
+    if index is None:
+        raise Exception("Index not found")
+    
+    else:
 
-    kdp_engine = index.as_chat_engine(
-        memory=memory,
-        llm=llm,
-        text_qa_template=PromptTemplate(TEXT_QA_TEMPLATE_STR),
-        refine_template=PromptTemplate(REFINE_TEMPLATE_STR),
-    )
+        kdp_engine = index.as_chat_engine(
+            memory=memory,
+            llm=llm,
+            text_qa_template=PromptTemplate(TEXT_QA_TEMPLATE_STR),
+            refine_template=PromptTemplate(REFINE_TEMPLATE_STR),
+        )
+
+        return kdp_engine
 
     # kdp_tool = QueryEngineTool(
     #     query_engine=kdp_engine,
@@ -81,10 +78,8 @@ async def initialize_chatbot(username):
     #     chat_store.persist(CONVERSATION_FILE)
 
 
-    return kdp_engine, chat_store
 
-
-async def handle_user_message(agent, chat_store, user_message):
+async def handle_user_message(agent, user_message):
 
     embedding_model, llm = await asyncio.to_thread(initialize_settings)
 
@@ -92,6 +87,5 @@ async def handle_user_message(agent, chat_store, user_message):
     Settings.embed_model = embedding_model
 
     response = agent.chat(user_message)
-    chat_store.persist(CONVERSATION_FILE)
 
     return response.response

@@ -20,10 +20,20 @@ async def upload_file(file: UploadFile):
             f.write(await file.read())
 
         nodes = await ingest_documents(file_path)
-        print("--> Indexing...")
-        vector_index = await build_indexes(nodes)
 
-        return JSONResponse(content={"message": "File processed successfully."})
+        if nodes is not None:
+            print("--> Indexing...")
+            vector_index = await build_indexes(nodes)
+
+        else:
+            raise HTTPException(status_code=501, detail="Error during document ingestion.")
+        
+        
+        if vector_index is not None:
+            return JSONResponse(content={"message": "File processed successfully."})
+        
+        else:
+            raise HTTPException(status_code=501, detail="Error during indexing.")
     
     except Exception as e:
         raise HTTPException(status_code=501, detail=str(e))

@@ -44,7 +44,7 @@ Get the API keys at:
 - GROQ_API_KEY: [Groq Cloud](https://console.groq.com/playground)
 
 ---
-## Quick start
+## Quick start (Currently not working!)
 Open Terminal and run the following command line:
 - Go to project folder
 ```bash

@@ -79,5 +79,6 @@ async def ingest_documents(file_path:str):
     
     except Exception as e:
         logger.error(f"Error during document ingestion: {e}")
-        raise
+        
+        return None
 

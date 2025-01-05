@@ -20,3 +20,8 @@ FILES_PATH = ["data/ingestion_storage/cau-truc-chung-cua-cau-tieng-anh.pdf"]
 INDEX_STORAGE = "../data/index_storage"
 USERS_FILE = "../data/user_storage/users.yaml"
 DOCUMENTS_PATHS = "../data/ingestion_storage"
+VECTOR_DB_PATH = "./database/chromadb" 
+POSTGRES_CONFIG_FILE = "./database/postgres/postgres_config.ini"
+
+# Variables
+CHAT_HISTORY_DATABASE = "chat_history"

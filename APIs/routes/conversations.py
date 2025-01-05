@@ -1,7 +1,9 @@
 import asyncio
 from fastapi import APIRouter, HTTPException
-from core.chat_handler import initialize_chatbot, handle_user_message, load_chat_store
+from core.chat_handler import initialize_chatbot, handle_user_message
 from pydantic import BaseModel
+from database.postgres.chat_history_manager import ChatStoreInitializer
+from config.settings import POSTGRES_CONFIG_FILE, CHAT_HISTORY_DATABASE
 
 router = APIRouter()
 
@@ -23,9 +25,9 @@ async def chat_with_bot(request: ChatRequest):
 
     try:
 
-        agent, chat_store = await initialize_chatbot(request.username)
+        agent = await initialize_chatbot(request.username)
 
-        bot_response = await handle_user_message(agent, chat_store, request.message)
+        bot_response = await handle_user_message(agent, request.message)
 
         return ChatResponse(
             username=request.username,
@@ -42,7 +44,8 @@ async def get_conversation_history(username: str):
 
     try:
 
-        chat_store = await load_chat_store()
+        chat_store_initializer = ChatStoreInitializer(POSTGRES_CONFIG_FILE, CHAT_HISTORY_DATABASE)
+        chat_store = chat_store_initializer.initialize_chat_store()
 
         messages = chat_store.get_messages(key=username)
 
