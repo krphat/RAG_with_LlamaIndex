@@ -69,6 +69,7 @@ def initialize_chatbot(chat_store, container, username):
     kdp_engine = index.as_chat_engine(
         memory=memory,
         llm=llm,
+        similarity_top_k=3,
         text_qa_template=PromptTemplate(TEXT_QA_TEMPLATE_STR),
         refine_template=PromptTemplate(REFINE_TEMPLATE_STR),
     )
